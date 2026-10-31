@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#14102E" />
+  <meta name="description" content="Happy Birthday Aastha aka Bundi! An immersive 3D gift journey crafted with all my love by Laddu 🍬" />
+  <title>Happy Birthday Aastha!</title>
+  
+  <!-- Google Fonts: Pacifico for display titles, Fredoka for body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Pacifico&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="./src/style.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍬</text></svg>" />
+</head>
+<body class="bg-[#14102E] text-white font-body selection:bg-hot-pink selection:text-white overflow-x-hidden antialiased">
+  
+  <!-- WebGL Background Canvas -->
+  <div id="canvas-container" class="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+    <canvas id="webgl-canvas" class="w-full h-full block"></canvas>
+  </div>
+
+  <!-- Fallback CSS Sky (for no-WebGL or low-spec) -->
+  <div id="css-sky-fallback" class="fixed inset-0 pointer-events-none -z-10 opacity-0 transition-opacity duration-1000 bg-gradient-to-b from-[#FFD9E8] via-[#FF4F86] to-[#14102E]" aria-hidden="true"></div>
+
+  <!-- Subtle Film Grain & Vignette Overlay -->
+  <div id="film-grain" class="film-grain-overlay pointer-events-none fixed inset-0 z-10 opacity-30" aria-hidden="true"></div>
+
+  <!-- Top Progress Bar -->
+  <div class="fixed top-0 left-0 right-0 h-1 bg-white/10 z-50 pointer-events-none">
+    <div id="scroll-progress-bar" class="h-full bg-gradient-to-r from-blush via-hot-pink to-lavender w-0 transition-all duration-75"></div>
+  </div>
+
+  <!-- Safe-Area Header: Sound Toggle & Chapter Indicator -->
+  <header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 pt-safe-offset-3 pb-2 pointer-events-none">
+    <div class="pointer-events-auto flex items-center gap-2 bg-midnight/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 text-xs text-cream/90 shadow-glass">
+      <span class="w-2 h-2 rounded-full bg-hot-pink animate-pulse"></span>
+      <span id="current-chapter-label" class="tracking-wide font-medium">Prologue: The Gift</span>
+    </div>
+
+    <!-- Sound & Haptics Button -->
+    <button id="sound-toggle-btn" class="pointer-events-auto min-w-[48px] min-h-[48px] p-2.5 rounded-full bg-midnight/70 backdrop-blur-md border border-white/20 text-cream hover:text-white hover:scale-105 active:scale-95 transition-all shadow-glass flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-hot-pink" aria-label="Toggle Sound Effects and Ambient Melody">
+      <span id="sound-icon" class="text-xl leading-none">🔇</span>
+    </button>
+  </header>
+
+  <!-- Side Chapter Dots -->
+  <nav id="chapter-nav-dots" class="fixed right-3 top-1/2 -translate-y-1/2 z-40 hidden sm:flex flex-col gap-2.5 pointer-events-auto bg-midnight/40 backdrop-blur-sm p-2 rounded-full border border-white/10" aria-label="Journey Chapters">
+    <!-- Generated dynamically by main.js -->
+  </nav>
+
+  <!-- Sparkle Particle Canvas (touch / pointer trail) -->
+  <canvas id="sparkle-canvas" class="fixed inset-0 pointer-events-none z-30"></canvas>
+
+  <!-- Custom Cursor Glow (Desktop Only) -->
+  <div id="cursor-glow" class="hidden md:block fixed w-8 h-8 rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2 z-50 border border-hot-pink/40 bg-hot-pink/10 blur-[2px] transition-transform duration-75 ease-out" aria-hidden="true"></div>
+
+  <!-- Idle Scroll Prompt Hint -->
+  <div id="idle-scroll-hint" class="fixed bottom-safe-offset-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none opacity-0 transition-opacity duration-500 flex flex-col items-center gap-1.5 bg-midnight/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-glow-pink">
+    <span class="text-xs text-cream/90 font-medium">Scroll to explore Bundi's world ✨</span>
+    <span class="text-hot-pink animate-bounce text-sm">↓</span>
+  </div>
+
+  <!-- Main Scrollable App Container: Mobile-First Centered Column -->
+  <main id="app" class="relative z-20 w-full min-h-screen">
+    
+    <!-- CHAPTER 0: THE GIFT COVER -->
+    <section id="chapter-0" class="relative w-full h-[100svh] flex flex-col items-center justify-center px-4 overflow-hidden" data-chapter-title="Chapter 0: A Gift For Bundi">
+      <div class="desktop-column w-full flex flex-col items-center justify-center text-center">
+        <!-- 3D Gift Box Animation Container -->
+        <div id="gift-box-wrapper" class="relative cursor-pointer group select-none min-w-[200px] min-h-[200px] flex items-center justify-center" role="button" tabindex="0" aria-label="Tap to open your birthday gift">
+          <div id="gift-glow" class="absolute inset-0 bg-hot-pink/30 rounded-full blur-2xl animate-pulse"></div>
+          <div id="gift-box" class="relative w-44 h-44 rounded-3xl bg-gradient-to-tr from-hot-pink via-blush to-peach p-1 shadow-glow-pink border-2 border-white/40 flex items-center justify-center transform transition-transform duration-300 group-hover:scale-105 active:scale-95">
+            <!-- Ribbon -->
+            <div class="absolute inset-x-0 h-8 top-1/2 -translate-y-1/2 bg-cream/90 shadow-md"></div>
+            <div class="absolute inset-y-0 w-8 left-1/2 -translate-x-1/2 bg-cream/90 shadow-md"></div>
+            <!-- Bow -->
+            <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-5xl filter drop-shadow">🎀</div>
+            <!-- Heart in center -->
+            <div class="relative z-10 w-16 h-16 rounded-2xl bg-white/30 backdrop-blur-md flex items-center justify-center text-3xl shadow-inner">
+              💝
+            </div>
+          </div>
+        </div>
+
+        <!-- Tap CTA -->
+        <div class="mt-8 space-y-2">
+          <p class="font-display text-2xl sm:text-3xl text-cream drop-shadow">A special delivery for Bundi</p>
+          <button id="open-gift-btn" class="min-h-[48px] px-8 py-3 rounded-full bg-gradient-to-r from-hot-pink to-lavender text-white font-semibold shadow-glow-pink hover:opacity-95 active:scale-95 transition-all text-base sm:text-lg border border-white/30 tracking-wide focus:outline-none focus:ring-4 focus:ring-hot-pink/50">
+            Tap to open your gift ✨
+          </button>
+        </div>
+
+        <!-- Loading Progress Bar -->
+        <div id="loader-container" class="mt-8 w-64 max-w-[80vw]">
+          <div class="flex justify-between text-xs text-white/70 mb-1.5 font-medium">
+            <span>Painting the stars...</span>
+            <span id="loader-percent">0%</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden border border-white/20 p-0.5">
+            <div id="loader-fill" class="h-full rounded-full bg-gradient-to-r from-hot-pink to-peach w-0 transition-all duration-200"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 1: HERO SUNSET SKY -->
+    <section id="chapter-1" class="relative w-full min-h-[110svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 1: The Birthday Girl">
+      <!-- Background Text Marquee -->
+      <div class="absolute inset-0 flex items-center pointer-events-none opacity-10 overflow-hidden select-none -z-10" aria-hidden="true">
+        <div id="hero-marquee" class="whitespace-nowrap text-8xl sm:text-9xl font-black uppercase tracking-widest text-white">
+          HAPPY BIRTHDAY AASTHA · BUNDI · HAPPY BIRTHDAY AASTHA · BUNDI · 
+        </div>
+      </div>
+
+      <div class="desktop-column w-full flex flex-col items-center text-center">
+        <!-- Floating Framed Portrait (Photo 01) Container -->
+        <div id="hero-portrait-frame" class="relative w-52 h-64 sm:w-60 sm:h-72 rounded-glass p-2 bg-white/15 backdrop-blur-xl border border-white/40 shadow-glow-pink mb-6 transform -rotate-2 hover:rotate-0 transition-transform duration-500 group">
+          <div class="relative w-full h-full rounded-[20px] overflow-hidden bg-midnight/50">
+            <img id="photo-01-img" src="/photos/01.jpg" alt="Aastha smiling on her birthday" class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-t from-midnight/80 via-transparent to-transparent"></div>
+            <div class="absolute bottom-2 inset-x-2 text-center text-xs text-cream/90 font-medium px-2 py-1 rounded-full bg-midnight/40 backdrop-blur-sm border border-white/10">
+              The Birthday Queen 👑
+            </div>
+          </div>
+          <div class="absolute -top-3 -right-3 text-3xl animate-bounce">✨</div>
+          <div class="absolute -bottom-2 -left-2 text-2xl">🌸</div>
+        </div>
+
+        <!-- Display Title with Split Character Animation -->
+        <h1 id="hero-title" class="font-display text-4xl sm:text-5xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-cream via-blush to-peach drop-shadow-lg tracking-wide mb-2">
+          Happy Birthday Aastha!
+        </h1>
+        
+        <p id="hero-subtitle" class="text-xl sm:text-2xl text-hot-pink font-semibold tracking-wider mb-4 drop-shadow">
+          aka Bundi 💕
+        </p>
+
+        <!-- Scramble Text Chip -->
+        <div id="scramble-chip" class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-midnight/60 backdrop-blur-md border border-white/20 text-cream/95 text-sm sm:text-base font-medium shadow-glass mb-8">
+          <span>♏</span>
+          <span id="scramble-date" class="font-mono">1 November 2005 · Scorpio</span>
+        </div>
+
+        <!-- Opening Lines -->
+        <div class="glass-card max-w-md p-6 text-center space-y-3">
+          <p class="text-base sm:text-lg text-white/90 leading-relaxed font-light">
+            To the girl who turned my ordinary world into pure magic... every star in the sky took a breath the day you arrived.
+          </p>
+          <p class="text-sm text-peach font-medium">
+            Scroll down to fly into the night sky 🌌
+          </p>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="mt-8 flex flex-col items-center gap-1 text-white/60">
+          <span class="text-xs uppercase tracking-widest font-semibold">Scroll</span>
+          <div class="w-5 h-9 rounded-full border-2 border-white/40 flex items-start justify-center p-1">
+            <div class="w-1.5 h-2.5 rounded-full bg-hot-pink animate-bounce"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 2: THE NIGHT SHE WAS BORN (Pinned Scrub) -->
+    <section id="chapter-2" class="relative w-full min-h-[150svh] flex flex-col items-center justify-center px-4" data-chapter-title="Chapter 2: The Scorpio Sky">
+      <div class="desktop-column w-full flex flex-col items-center text-center sticky top-20">
+        <div class="glass-card max-w-lg p-6 sm:p-8 space-y-5">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antares/20 border border-antares/40 text-antares text-xs font-semibold uppercase tracking-wider">
+            <span class="w-2 h-2 rounded-full bg-antares animate-ping"></span>
+            Constellation Scorpius ♏
+          </div>
+
+          <h2 id="scorpio-heading" class="font-display text-3xl sm:text-4xl text-cream">
+            1 November 2005
+          </h2>
+
+          <p id="scorpio-body-text" class="text-base sm:text-lg text-white/90 leading-relaxed min-h-[70px]">
+            A little Scorpio arrived under a velvet autumn night... and everything in the universe got infinitely brighter.
+          </p>
+
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs text-cream/80">
+            <span class="flex items-center gap-1.5">
+              <span class="text-antares text-base">💖</span>
+              <strong>Antares:</strong> Heart of Scorpius
+            </span>
+            <span class="text-white/60">Tap any star for chimes ✨</span>
+          </div>
+
+          <button id="star-burst-trigger-btn" class="min-h-[48px] w-full py-2.5 px-4 rounded-xl bg-antares/30 hover:bg-antares/40 border border-antares/50 text-white font-medium text-sm transition-all flex items-center justify-center gap-2">
+            <span>✨</span> Rain Golden Starlight
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 3: MEMORY GALAXY (Pinned Scrub) -->
+    <section id="chapter-3" class="relative w-full min-h-[220svh] flex flex-col items-center justify-start px-4 pt-24" data-chapter-title="Chapter 3: Memory Galaxy">
+      <div class="desktop-column w-full flex flex-col items-center text-center sticky top-16">
+        <!-- Floating Galaxy HUD -->
+        <div class="mb-4 flex items-center justify-between w-full max-w-md px-4 py-2 rounded-full bg-midnight/70 backdrop-blur-md border border-white/15 text-xs text-cream shadow-glass">
+          <span class="font-medium flex items-center gap-1.5">
+            <span>🌌</span> Memory Galaxy
+          </span>
+          <span id="galaxy-counter" class="font-mono text-hot-pink font-semibold">1 / 8</span>
+          <span class="text-white/60">Tap photo to zoom 🔍</span>
+        </div>
+
+        <!-- Active Memory Glass Card -->
+        <div id="galaxy-card" class="glass-card max-w-md w-full p-5 sm:p-6 transition-all duration-500">
+          <div id="galaxy-photo-preview" class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 bg-midnight/60 border border-white/10 cursor-pointer group" role="button" tabindex="0" aria-label="Tap to view memory photo in fullscreen">
+            <img id="active-galaxy-img" src="/photos/02.jpg" alt="Memory with Bundi" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-t from-midnight/70 via-transparent to-transparent"></div>
+            <div class="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-midnight/60 backdrop-blur-md border border-white/20 text-xs text-white flex items-center gap-1">
+              <span>Tap to enlarge</span> 🔍
+            </div>
+          </div>
+          
+          <h3 id="galaxy-caption" class="text-base sm:text-lg font-medium text-white/95 leading-snug">
+            That smile that can dissolve any bad day in a fraction of a second 💕
+          </h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 4: LANTERN FIELD (Horizontal Scroll Pin) -->
+    <section id="chapter-4" class="relative w-full min-h-[180svh] flex flex-col items-center justify-start px-4 pt-20" data-chapter-title="Chapter 4: Lantern Field">
+      <div class="desktop-column w-full flex flex-col items-center sticky top-16 overflow-hidden">
+        <div class="text-center mb-6">
+          <span class="px-3 py-1 rounded-full bg-cream/15 border border-cream/30 text-cream text-xs font-semibold uppercase tracking-wider">
+            🏮 River of Lanterns
+          </span>
+          <h2 class="font-display text-3xl sm:text-4xl text-cream mt-2">
+            Reasons I Love Bundi
+          </h2>
+          <p class="text-xs text-white/70 mt-1">
+            Scroll horizontally through the glowing lanterns ✨
+          </p>
+        </div>
+
+        <!-- Horizontal Lantern Container Driven by Vertical Scroll -->
+        <div id="lantern-track-container" class="w-full overflow-hidden relative py-4">
+          <div id="lantern-track" class="flex gap-4 items-center transition-transform will-change-transform">
+            <!-- Populated dynamically from config.reasons -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 5: ARCADE QUIZ -->
+    <section id="chapter-5" class="relative w-full min-h-[120svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 5: Bundi Quiz">
+      <div class="desktop-column w-full flex flex-col items-center">
+        <div class="glass-card max-w-lg w-full p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-full bg-hot-pink/20 border border-hot-pink/40 text-hot-pink text-xs font-semibold">
+              🎮 Bundi Arcade Quiz
+            </span>
+            <span id="quiz-progress" class="text-xs font-mono text-cream/80">Question 1/5</span>
+          </div>
+
+          <h3 id="quiz-question-text" class="text-lg sm:text-xl font-semibold text-white mb-6 min-h-[56px] leading-snug">
+            What is Bundi's undeniable certified superpower?
+          </h3>
+
+          <div id="quiz-options-container" class="space-y-3 mb-6">
+            <!-- 4 options generated dynamically -->
+          </div>
+
+          <!-- Answer Feedback Box -->
+          <div id="quiz-feedback-box" class="hidden p-4 rounded-2xl text-sm font-medium transition-all duration-300"></div>
+
+          <!-- Score Card (shown after 5 questions) -->
+          <div id="quiz-score-card" class="hidden text-center space-y-4">
+            <div class="text-5xl">🏆</div>
+            <h4 class="font-display text-2xl text-cream">Certified Bundi Expert!</h4>
+            <p id="quiz-verdict" class="text-sm text-white/90 leading-relaxed"></p>
+            <button id="quiz-restart-btn" class="min-h-[48px] px-6 py-2.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-medium text-sm transition-all border border-white/20">
+              Play Again 🔄
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 6: THE BIG QUESTION -->
+    <section id="chapter-6" class="relative w-full min-h-[110svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 6: The Big Question">
+      <div class="desktop-column w-full flex flex-col items-center text-center">
+        <div id="question-card" class="glass-card max-w-md w-full p-8 space-y-6 relative overflow-hidden">
+          <div class="w-20 h-20 mx-auto rounded-full bg-hot-pink/20 border border-hot-pink/40 flex items-center justify-center text-4xl shadow-glow-pink animate-pulse">
+            💌
+          </div>
+
+          <h2 class="font-display text-3xl sm:text-4xl text-cream">
+            Do you love me, Bundi?
+          </h2>
+
+          <p class="text-sm text-white/80">
+            Choose wisely... (there is strictly only one right answer 😉)
+          </p>
+
+          <!-- Buttons Container: Dodging "No" Button -->
+          <div id="question-actions-area" class="relative min-h-[140px] w-full flex items-center justify-center gap-4">
+            <!-- Yes Button -->
+            <button id="btn-love-yes" class="min-h-[48px] min-w-[120px] px-6 py-3 rounded-full bg-gradient-to-r from-hot-pink to-peach text-white font-bold text-lg shadow-glow-pink hover:scale-105 active:scale-95 transition-transform border border-white/30 focus:outline-none focus:ring-4 focus:ring-hot-pink">
+              YES! 💖
+            </button>
+
+            <!-- Dodging No Button -->
+            <button id="btn-love-no" class="absolute min-h-[48px] px-6 py-3 rounded-full bg-white/10 hover:bg-white/15 text-white/80 font-medium text-sm border border-white/20 transition-all select-none focus:outline-none">
+              No 🙈
+            </button>
+          </div>
+
+          <!-- Sweet Confirmation Modal / Overlay -->
+          <div id="love-confession-result" class="hidden text-center space-y-4 pt-4 border-t border-white/10">
+            <div class="text-5xl animate-bounce">🥰</div>
+            <p class="font-display text-2xl text-cream">I knew it, Bundi!</p>
+            <p class="text-sm text-white/90 leading-relaxed">
+              You are stuck with Laddu forever and ever. No refunds, no exchanges! 💕🍬
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 7: MOVIE DATE & VOUCHERS -->
+    <section id="chapter-7" class="relative w-full min-h-[140svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 7: Movie Date">
+      <div class="desktop-column w-full flex flex-col items-center">
+        <div class="text-center mb-6">
+          <span class="px-3 py-1 rounded-full bg-lavender/20 border border-lavender/40 text-lavender text-xs font-semibold uppercase tracking-wider">
+            🎬 Date Night Pass
+          </span>
+          <h2 class="font-display text-3xl sm:text-4xl text-cream mt-2">
+            Pick Our Birthday Movie
+          </h2>
+          <p class="text-xs text-white/70 mt-1">
+            Tap a card to print your official cinema ticket stub 🎟️
+          </p>
+        </div>
+
+        <!-- 3D Tilt Movie Cards -->
+        <div id="movie-cards-grid" class="grid grid-cols-1 gap-4 w-full max-w-md mb-8">
+          <!-- Populated from config.movieChoices -->
+        </div>
+
+        <!-- Cinema Ticket Stub (appears upon selection) -->
+        <div id="cinema-ticket-stub" class="hidden w-full max-w-md p-6 rounded-3xl bg-cream text-midnight font-body shadow-2xl border-4 border-dashed border-hot-pink/40 relative overflow-hidden transition-all duration-500">
+          <div class="flex items-center justify-between border-b-2 border-midnight/15 pb-3 mb-3">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-hot-pink">VIP ADMIT TWO</span>
+              <h3 id="ticket-movie-title" class="font-display text-xl text-midnight">Cozy Movie Night</h3>
+            </div>
+            <span class="text-4xl">🍿</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs mb-4">
+            <div><strong class="text-midnight/60">Date:</strong> Tonight & Forever</div>
+            <div><strong class="text-midnight/60">Seats:</strong> Best Cuddle Spots</div>
+            <div><strong class="text-midnight/60">Snacks:</strong> Popcorn + Momos</div>
+            <div><strong class="text-midnight/60">Complaints:</strong> 0% Allowed</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-midnight/5 text-center text-xs font-medium text-midnight/80">
+            Valid exclusively for Aastha & Laddu 🍬
+          </div>
+        </div>
+
+        <!-- Tear-off Gift Vouchers -->
+        <div class="w-full max-w-md mt-8">
+          <h3 class="font-display text-2xl text-cream text-center mb-4">Birthday Vouchers for Bundi</h3>
+          <div id="vouchers-container" class="space-y-3">
+            <!-- Populated from config.vouchers -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 8: SCRATCH AND SURPRISE -->
+    <section id="chapter-8" class="relative w-full min-h-[120svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 8: Scratch Cards">
+      <div class="desktop-column w-full flex flex-col items-center">
+        <div class="text-center mb-6">
+          <span class="px-3 py-1 rounded-full bg-peach/20 border border-peach/40 text-peach text-xs font-semibold uppercase tracking-wider">
+            🪙 Lucky Scratch Cards
+          </span>
+          <h2 class="font-display text-3xl sm:text-4xl text-cream mt-2">
+            Scratch & Reveal
+          </h2>
+          <p class="text-xs text-white/70 mt-1">
+            Rub your finger on the cards to uncover secret surprises ✨
+          </p>
+        </div>
+
+        <!-- 3 Scratch-off Cards -->
+        <div id="scratch-cards-container" class="grid grid-cols-1 gap-5 w-full max-w-md">
+          <!-- Populated from config.scratchCards -->
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 9: LOVE LETTER -->
+    <section id="chapter-9" class="relative w-full min-h-[140svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 9: The Love Letter">
+      <div class="desktop-column w-full flex flex-col items-center">
+        <!-- Love Letter Glass Card with Typewriter Scroll Effect -->
+        <div class="glass-card max-w-lg w-full p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+          <!-- Subtle watermark icon -->
+          <div class="absolute -right-6 -bottom-6 text-9xl opacity-5 pointer-events-none">💌</div>
+
+          <div class="flex items-center gap-2 border-b border-white/15 pb-4 mb-5">
+            <span class="text-2xl">🖋️</span>
+            <div>
+              <h2 class="font-display text-2xl sm:text-3xl text-cream">Dearest Bundi,</h2>
+              <span class="text-xs text-peach">A letter straight from Laddu's heart</span>
+            </div>
+          </div>
+
+          <div id="typewriter-letter-body" class="text-sm sm:text-base text-white/95 leading-relaxed space-y-4 font-light whitespace-pre-line min-h-[220px]">
+            <!-- Typewriter letter text streams in -->
+          </div>
+
+          <!-- Blinking Cursor -->
+          <span id="typewriter-cursor" class="inline-block w-2 h-4 bg-hot-pink ml-1 animate-pulse"></span>
+
+          <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
+            <span class="text-xs text-white/60">Signed with endless love</span>
+            <span class="font-display text-xl text-hot-pink">Laddu 🍬</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 10: MAKE A WISH (CAKE ISLAND) -->
+    <section id="chapter-10" class="relative w-full min-h-[150svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 10: Make a Wish">
+      <div class="desktop-column w-full flex flex-col items-center text-center">
+        <div class="glass-card max-w-md w-full p-6 sm:p-8 space-y-5">
+          <span class="px-3 py-1 rounded-full bg-cream/20 border border-cream/40 text-cream text-xs font-semibold uppercase tracking-wider">
+            🎂 Cake Island
+          </span>
+
+          <h2 class="font-display text-3xl sm:text-4xl text-cream">
+            Make a Wish, Bundi!
+          </h2>
+
+          <p class="text-sm text-white/90 leading-relaxed">
+            Close your eyes, think of your sweetest dream for your 21st year, and blow out each candle flame!
+          </p>
+
+          <!-- 5 Candles Tap Bar -->
+          <div class="p-4 rounded-2xl bg-white/10 border border-white/20 flex flex-col items-center gap-3">
+            <div id="candle-flames-row" class="flex items-center justify-center gap-3 sm:gap-4">
+              <!-- 5 Interactive candle flame buttons -->
+            </div>
+            <p id="candle-status-hint" class="text-xs text-peach font-medium">
+              Tap the flames to blow them out 🕯️
+            </p>
+          </div>
+
+          <!-- Wish Celebration Banner (unlocked when all candles blown) -->
+          <div id="wish-blown-banner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-hot-pink/30 to-lavender/30 border border-white/30 text-center space-y-2 animate-fade-in">
+            <div class="text-4xl animate-bounce">🌠</div>
+            <h3 class="font-display text-2xl text-cream">Your wish has been launched into the stars!</h3>
+            <p class="text-xs text-white/90">Watch the fireworks illuminate your birthday sky! 🎆</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 11: WISHES WALL -->
+    <section id="chapter-11" class="relative w-full min-h-[130svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 11: Wishes Wall">
+      <div class="desktop-column w-full flex flex-col items-center">
+        <div class="text-center mb-6">
+          <span class="px-3 py-1 rounded-full bg-hot-pink/20 border border-hot-pink/40 text-hot-pink text-xs font-semibold uppercase tracking-wider">
+            ✨ Message Board
+          </span>
+          <h2 class="font-display text-3xl sm:text-4xl text-cream mt-2">
+            The Birthday Wishes Wall
+          </h2>
+          <p class="text-xs text-white/70 mt-1">
+            Leave another sweet wish for Bundi's special day! 🌸
+          </p>
+        </div>
+
+        <!-- Add Wish Form -->
+        <form id="add-wish-form" class="glass-card max-w-md w-full p-5 mb-6 space-y-3">
+          <div>
+            <label for="wish-author" class="block text-xs font-medium text-cream/90 mb-1">Your Name</label>
+            <input type="text" id="wish-author" required placeholder="e.g. Laddu, Bestie..." class="w-full px-4 py-2.5 rounded-xl bg-midnight/50 border border-white/20 text-white placeholder-white/40 text-base focus:outline-none focus:ring-2 focus:ring-hot-pink" />
+          </div>
+          <div>
+            <label for="wish-message" class="block text-xs font-medium text-cream/90 mb-1">Your Wish / Sweet Note</label>
+            <textarea id="wish-message" required rows="2" placeholder="Write something sweet or funny..." class="w-full px-4 py-2.5 rounded-xl bg-midnight/50 border border-white/20 text-white placeholder-white/40 text-base focus:outline-none focus:ring-2 focus:ring-hot-pink resize-none"></textarea>
+          </div>
+          <button type="submit" class="min-h-[48px] w-full py-2.5 rounded-xl bg-gradient-to-r from-hot-pink to-lavender text-white font-semibold text-sm shadow-glow-pink hover:opacity-95 active:scale-98 transition-all border border-white/20">
+            Post to Bundi's Wall 💌
+          </button>
+        </form>
+
+        <!-- Wall Messages List -->
+        <div id="wishes-list" class="w-full max-w-md space-y-3">
+          <!-- Populated from config.wishesSeed + localStorage -->
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 12: SUNRISE CREDITS -->
+    <section id="chapter-12" class="relative w-full min-h-[140svh] flex flex-col items-center justify-center px-4 py-16" data-chapter-title="Chapter 12: Sunrise Credits">
+      <div class="desktop-column w-full flex flex-col items-center text-center">
+        <div class="glass-card max-w-md w-full p-6 sm:p-8 space-y-6">
+          <span class="px-3 py-1 rounded-full bg-cream/20 border border-cream/40 text-cream text-xs font-semibold uppercase tracking-wider">
+            🌅 The Brightest Morning
+          </span>
+
+          <!-- Movie Poster Shot: Photo 10 -->
+          <div class="relative w-48 h-64 mx-auto rounded-2xl overflow-hidden p-1.5 bg-gradient-to-tr from-hot-pink via-cream to-lavender shadow-2xl">
+            <img src="/photos/10.jpg" alt="Starring Aastha aka Bundi" class="w-full h-full object-cover rounded-xl" />
+            <div class="absolute bottom-2 inset-x-2 py-1 px-2 rounded-lg bg-midnight/80 backdrop-blur-md text-[10px] text-cream font-medium">
+              STARRING AASTHA
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <h2 id="credits-title" class="font-display text-3xl sm:text-4xl text-cream cursor-pointer select-none" title="Tap 3 times for a secret message!">
+              Happy Birthday Bundi!
+            </h2>
+            <p class="text-xs text-white/60">Tap the title 3 times for a secret surprise 🤫</p>
+          </div>
+
+          <div class="space-y-2 text-sm text-white/90 border-y border-white/15 py-4">
+            <p><strong>Starring:</strong> Aastha aka Bundi</p>
+            <p><strong>Date of Birth:</strong> 1 November 2005 · Scorpio ♏</p>
+            <p><strong>Soundtrack:</strong> Infinite Chimes & Heartbeats</p>
+            <p><strong>Executive Director:</strong> Laddu 🍬</p>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row gap-3">
+            <button id="btn-replay-journey" class="min-h-[48px] flex-1 py-3 px-6 rounded-full bg-gradient-to-r from-hot-pink to-peach text-white font-semibold text-sm shadow-glow-pink hover:opacity-95 active:scale-95 transition-all border border-white/30">
+              Watch Again 🚀
+            </button>
+          </div>
+
+          <p class="text-xs text-cream/70 font-display">
+            The End · But our story is just getting started 💕
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Fullscreen Photo Modal with Ripple Effect -->
+  <div id="photo-modal" class="fixed inset-0 z-50 bg-midnight/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300" role="dialog" aria-modal="true" aria-label="Fullscreen photo view">
+    <button id="close-photo-modal-btn" class="absolute top-safe-offset-4 right-4 min-w-[48px] min-h-[48px] p-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center border border-white/20 transition-all focus:outline-none" aria-label="Close photo view">
+      ✕
+    </button>
+    <div id="modal-image-wrapper" class="relative max-w-md w-full max-h-[75vh] aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-white/30 p-1 bg-white/10 cursor-pointer">
+      <img id="modal-image-src" src="" alt="Fullscreen memory" class="w-full h-full object-cover rounded-2xl" />
+      <div id="modal-ripple-layer" class="absolute inset-0 pointer-events-none"></div>
+    </div>
+    <p id="modal-caption" class="mt-4 text-center text-sm sm:text-base text-cream/95 max-w-md px-4 font-medium drop-shadow"></p>
+  </div>
+
+  <!-- Secret Message Modal -->
+  <div id="secret-modal" class="fixed inset-0 z-50 bg-midnight/95 backdrop-blur-2xl flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300" role="dialog" aria-modal="true" aria-label="Secret message from Laddu">
+    <div class="glass-card max-w-sm w-full p-6 text-center space-y-4 border-2 border-hot-pink shadow-glow-pink">
+      <div class="text-5xl animate-bounce">🎁</div>
+      <h3 class="font-display text-2xl text-cream">Secret Message Unlocked!</h3>
+      <p id="secret-modal-text" class="text-sm text-white/90 leading-relaxed"></p>
+      <button id="close-secret-modal-btn" class="min-h-[48px] w-full py-2.5 rounded-full bg-hot-pink text-white font-semibold text-sm shadow-glow-pink active:scale-95 transition-all">
+        I Love You Too Laddu! 💖
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
+
